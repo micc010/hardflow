@@ -1,0 +1,172 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>hardflow</title>
+		<link type="text/css" href="lib/jquery-ui/jquery-ui.css" rel="stylesheet" />	
+		<link type="text/css" href="hardflow/css/hardflow.css" rel="stylesheet" />
+		
+		<script src="lib/jquery/jquery-1.12.3.min.js" type="text/javascript"></script>
+		<script src="lib/jquery-ui/jquery-ui.min.js" type="text/javascript"></script>
+		
+		<script src="lib/raphael/raphael-min.js" type="text/javascript"></script>
+		
+		<script src="lib/underscore/underscore.min.js" type="text/javascript"></script>
+		<script src="lib/backbone/backbone.min.js" type="text/javascript"></script>
+		
+		<script src="lib/laydate/laydate.js" type="text/javascript"></script>
+
+		<script src="hardflow/view/widget.js" type="text/javascript"></script>
+		<script src="hardflow/view/property.js" type="text/javascript"></script>
+		<script src="hardflow/view/control.js" type="text/javascript"></script>
+		<script src="hardflow/model/controlfatory.js" type="text/javascript"></script>
+		<script src="hardflow/model/inputfilter.js" type="text/javascript"></script>
+		<script src="hardflow/view/userview.js" type="text/javascript"></script>
+		<script src="hardflow/designer.js" type="text/javascript"></script>
+		
+		<script type="text/javascript">
+            var DEBUG = window.console ? !0 : !1;
+            if (!DEBUG) {
+                window.console || (window.console = {});
+                var methods = ["log", "debug", "warn", "info", "error"];
+                for (var i = 0; i < methods.length; i++) window.console[methods[i]] = function() {}
+            }
+        </script>
+	</head>
+	<body class="grid design">
+		<!--
+		<div id="header" class="clearfix">
+			<div class="h-t">
+				<div class="h-l l">
+					<a href="javascript:void(0);" id="btn-pageinfo" class="btn btn-blue btn-pageinfo">
+						<div class="l"></div>
+						<div class="l-c"><div class="h-icon h-icon-pageinfo"></div><span>模板信息</span></div>
+						<div class="r"></div>
+					</a>
+					<a href="javascript:void(0);" id="btn-publish" class="btn btn-green btn-publish">
+						<div class="l"></div>
+						<div class="l-c"><div class="h-icon h-icon-publish"></div><span>完成</span></div>
+						<div class="r"></div>
+					</a>
+				</div>
+			</div>
+		</div>
+		-->
+
+		<div id="main-content">
+			
+		</div>
+
+		<div id="control-dialog">
+			<div id="userview-control">
+				<ul>
+					<li class="menu-item ticon1 choose">选择</li>
+					<li class="menu-item ticon2 grid">栅格</li>
+					<li class="menu-split"></li>
+					<li class="menu-item ticon3 save">保存</li>
+					<li class="menu-item ticon4 publish">发布</li>
+					<li class="menu-split"></li>
+					<li class="menu-item ticon14 sequenceflow" type="sequenceflow">连接</li>
+					<li class="menu-split"></li>
+					<li class="menu-item ticon7 ui-draggable startevent" type="startevent">开始</li>
+					<li class="menu-item ticon8 ui-draggable endevent" type="endevent">结束</li>
+					<li class="menu-item ticon12 ui-draggable usertask" type="usertask">任务</li>
+					<li class="menu-item ticon11 ui-draggable conditionnode" type="conditionnode">条件分支</li>
+					<li class="menu-item ticon13 ui-draggable timetask" type="timetask">定时任务</li>
+					<li class="menu-split"></li>
+				</ul>
+			</div>
+		</div>
+
+		<div id="property-dialog">
+			<div id="userview-property"></div>
+		</div>
+		
+		<script id="template-ui-propertyview" type="text/template">  
+			<div class="scrollbar disable"><div class="track"><div class="thumb"><div class="top"></div><div class="bottom"></div></div></div></div>
+			<div class="viewport">
+				<div class="overview" />
+			</div>
+		</script>
+
+		<!-- widgets -->
+		<script id="template-widget-nullwidget" type="text/template">
+			<div></div>
+		</script>
+		<!-- 单行文本框 -->
+		<script id="template-widget-singletext" type="text/template">
+			<div class="fg clearfix">
+				<div class="fl"><%=_property_title %></div>
+				<div class="fe">
+					<input type="text" value="<%=text%>" <% if(_readonly){ %> readonly="readonly" <%};%>/>
+				</div>
+			</div>
+		</script>
+		<!-- 多行文本框 -->
+        <script id="template-widget-multitext" type="text/template">
+            <div class="fg clearfix">
+                <div class="fl"><%=_property_title %></div>
+                <div class="fe">
+                    <textarea <% if(_readonly){ %> readonly="readonly" <%};%>><%=text%></textarea>
+                </div>
+            </div>
+        </script>
+		<!-- 单选按钮 -->
+		<script id="template-widget-radiobuttons" type="text/template">
+			<div class="fg clearfix">
+				<div class="fl"><%=_property_title %></div>
+				<div class="fe">
+					<% _.each(options, function(o) { %>
+						<input type="radio" id="rad-<%=_wid%>-<%=o.value%>" name="rad-<%=_wid%>" value="<%=o.value%>" <% if(_readonly){ %> disabled="disabled" <%};%> <% if(o.checked){ %> checked="checked" <%};%> />
+						<label for="rad-<%=_wid%>-<%=o.value%>"><%=o.text%></label>
+					<% }); %>					
+				</div>
+			</div>
+		</script>
+		<!-- 多选 -->
+        <script id="template-widget-checkbox" type="text/template">
+            <div class="fg clearfix">
+                <div class="fl"><%=_property_title %></div>
+                <div class="fe">
+                    <% _.each(options, function(o) { %>
+                        <input type="checkbox" id="chk-<%=_wid%>-<%=o.value%>" name="chk-<%=_wid%>" value="<%=o.value%>" <% if(_readonly){ %> disabled="disabled" <%};%> <% if(o.checked){ %> checked="checked" <%};%> />
+                        <label for="chk-<%=_wid%>-<%=o.value%>"><%=o.text%></label>
+                    <% }); %>                   
+                </div>
+            </div>
+        </script>
+		<!-- 下拉选择按钮 -->
+        <script id="template-widget-selectone" type="text/template">
+            <div class="fg clearfix">
+                <div class="fl"><%=_property_title %></div>
+                <div class="fe">
+                    <select  name="select-<%=_wid%>" <% if(_readonly){ %> disabled="disabled" <%};%>>
+                        <option value="">请选择...</option>
+                        <% _.each(options, function(o) { %>
+                            <option value="<%=o.value%>" id="select-<%=_wid%>-<%=o.value%>" <% if(o.selected){ %> selected="selected" <%};%>><%=o.text%></option>
+                        <% }); %> 
+                    </select>
+                </div>
+            </div>
+        </script>
+        <!-- 时间 -->
+        <script id="template-widget-datetext" type="text/template">
+            <div class="fg clearfix">
+                <div class="fl"><%=_property_title %></div>
+                <div class="fe">
+                    <input type="text" id="date-<%=_wid%>" name="date-<%=_wid%>" class="laydate-icon" value="<%=time%>" <% if(_readonly){ %> readonly="readonly" <%};%>/>
+                </div>
+            </div>
+        </script>
+		<script type="text/javascript">
+		jQuery(function($){
+			var designer = new Designer();
+			designer.bind("appInited", function(){
+				designer.loadApp({doc:{"type":"designer","id":"1001","properties":{},"children":[{"type":"startevent","id":"startevent39993","properties":{"x":188,"y":231,"name":"开始","sourceRef":"","targetRef":"","ended":""},"children":[]},{"type":"endevent","id":"endevent435563","properties":{"x":822,"y":230,"name":"结束","sourceRef":"","targetRef":"","ended":""},"children":[]},{"type":"usertask","id":"usertask305413","properties":{"x":298,"y":232,"name":"任务2","sourceRef":"","targetRef":"","ended":"","assignee":"都是","active":0},"children":[{"type":"textnode","id":"textnode723336","properties":{"x":0,"y":0,"name":"name","sourceRef":"","targetRef":"","ended":"","text":"任务2"},"children":[]}]},{"type":"conditionnode","id":"conditionnode124845","properties":{"x":443,"y":233,"name":"条件分支","sourceRef":"","targetRef":"","ended":""},"children":[]},{"type":"sequenceflow","id":"sequenceflow90253","properties":{"x":267,"y":255.5,"name":"连接","sourceRef":"startevent39993","targetRef":"usertask305413","ended":"","path":"M236,255 L298,256","conditionDisc":"","condition":""},"children":[{"type":"arrownode","id":"arrownode269921","properties":{"x":0,"y":0,"name":"连接","sourceRef":"","targetRef":"","ended":"","path":"M298,256 L290.57080703176496,251.54948409274525 L290.4311436802531,260.20861188648087z","conditionDisc":"","condition":""},"children":[]}]},{"type":"sequenceflow","id":"sequenceflow807399","properties":{"x":430.5,"y":257,"name":"连接","sourceRef":"usertask305413","targetRef":"conditionnode124845","ended":"","path":"M418,257 L443,257","conditionDisc":"","condition":""},"children":[{"type":"arrownode","id":"arrownode68187","properties":{"x":0,"y":0,"name":"连接","sourceRef":"","targetRef":"","ended":"","path":"M443,257 L435.5,252.66987298107782 L435.5,261.3301270189222z","conditionDisc":"","condition":""},"children":[]}]},{"type":"usertask","id":"usertask329925","properties":{"x":549,"y":298,"name":"任务1","sourceRef":"","targetRef":"","ended":"","assigneeType":[{"text":"用户","value":"user","checked":1},{"text":"角色","value":"role","checked":1}],"assignee":"213","active":0},"children":[{"type":"textnode","id":"textnode965572","properties":{"x":0,"y":0,"name":"name","sourceRef":"","targetRef":"","ended":"","text":"任务1"},"children":[]}]},{"type":"sequenceflow","id":"sequenceflow451887","properties":{"x":523,"y":283,"name":"连接","sourceRef":"conditionnode124845","targetRef":"usertask329925","ended":"","path":"M491,268 L555,298","conditionDisc":"","condition":""},"children":[{"type":"arrownode","id":"arrownode153407","properties":{"x":0,"y":0,"name":"连接","sourceRef":"","targetRef":"","ended":"","path":"M555,298 L550.046910575521,290.8959937251496 L546.371205385096,298.73749813138966z","conditionDisc":"","condition":""},"children":[]},{"type":"textnode","id":"textnode430292","properties":{"x":0,"y":0,"name":"conditionDisc","sourceRef":"","targetRef":"","ended":"","text":""},"children":[]}]},{"type":"sequenceflow","id":"sequenceflow76152","properties":{"x":745.5,"y":282.5,"name":"连接","sourceRef":"usertask329925","targetRef":"endevent435563","ended":"","path":"M669,305 L822,260","conditionDisc":"","condition":""},"children":[{"type":"arrownode","id":"arrownode371796","properties":{"x":0,"y":0,"name":"连接","sourceRef":"","targetRef":"","ended":"","path":"M822,260 L813.5829427148697,257.96207295056104 L816.0265747615612,266.27042190931223z","conditionDisc":"","condition":""},"children":[]}]},{"type":"timetask","id":"timetask924406","properties":{"x":583,"y":145,"name":"定时任务","sourceRef":"","targetRef":"","ended":"","time":"2016-05-13","active":""},"children":[]},{"type":"sequenceflow","id":"sequenceflow979248","properties":{"x":537,"y":212,"name":"连接","sourceRef":"conditionnode124845","targetRef":"timetask924406","ended":"","path":"M491,241 L583,183","conditionDisc":"","condition":""},"children":[{"type":"arrownode","id":"arrownode119176","properties":{"x":0,"y":0,"name":"连接","sourceRef":"","targetRef":"","ended":"","path":"M583,183 L574.346297243008,183.33679161751894 L578.964818718057,190.66272223311387z","conditionDisc":"","condition":""},"children":[]},{"type":"textnode","id":"textnode610283","properties":{"x":0,"y":0,"name":"conditionDisc","sourceRef":"","targetRef":"","ended":"","text":""},"children":[]}]},{"type":"sequenceflow","id":"sequenceflow655140","properties":{"x":726.5,"y":211,"name":"连接","sourceRef":"timetask924406","targetRef":"endevent435563","ended":"","path":"M631,177 L822,245","conditionDisc":"","condition":""},"children":[{"type":"arrownode","id":"arrownode163496","properties":{"x":0,"y":0,"name":"连接","sourceRef":"","targetRef":"","ended":"","path":"M822,245 L816.3867480373889,238.4051988351245 L813.482108677005,246.5638182150263z","conditionDisc":"","condition":""},"children":[]}]}]}});
+			});
+			designer.render();
+		});
+		</script>
+		
+	</body>		
+</html>
