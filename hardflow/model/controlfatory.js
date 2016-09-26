@@ -4,8 +4,6 @@ ControlFactory = Backbone.Model.extend({}, {
         startevent: StartEvent,
         endevent: EndEvent,
         usertask: UserTask,
-        conditionnode: ConditionNode,
-        timetask: TimeTask,
         sequenceflow: SequenceFlow,
         textnode: TextNode,
         arrownode: ArrowNode

@@ -185,14 +185,12 @@ ProcessNode = Control.extend({
 		this.name = new ScalarProperty("节点名称", new TextWidget(new AcceptAllInputFilter, !1), ""),
 		this.sourceRef = new ScalarProperty("sourceRef", new NullWidget(new AcceptAllInputFilter, !1), ""),
 		this.targetRef = new ScalarProperty("targetRef", new NullWidget(new AcceptAllInputFilter, !1), ""),
-		this.ended = new ScalarProperty("ended", new NullWidget(new AcceptAllInputFilter, !1), ""),
-		
+
 		this.addProperty("x", this.x, {pos: 0}),
 		this.addProperty("y", this.y, {pos: 1}),
 		this.addProperty("name", this.name, {pos: 2}),
 		this.addProperty("sourceRef", this.sourceRef, {pos: 3}),
 		this.addProperty("targetRef", this.targetRef, {pos: 4}),
-		this.addProperty("ended", this.ended, {pos: 5})
 	},
 	renderTo: function(point){
 		this.render(),
@@ -225,10 +223,6 @@ ProcessNode = Control.extend({
     },
     isPath: function(){
     	return this._type === "sequenceflow"
-    },
-    markEnded: function(){
-        this._attrs.stroke && (this._attrs.stroke = "#0000CC");
-        return this._attrs;
     }
 });
 
@@ -244,28 +238,10 @@ StartEvent = ProcessNode.extend({
 	},
 	render: function(){
 		var paper = this.getContainer()._paper, attrs = this._attrs;
-		attrs = (this.ended.getValue() === 1 ? this.markEnded() : this._attrs);
 		this._el = paper.image("", this.x.getValue(), this.y.getValue(), 0, 0).attr(attrs),
 		$(this._el.node).attr("id", this._id),
 		this.trigger("controlRendered")
-	},
-	validateSequence: function (toControl){
-	    var fromType = this.getControlType(),
-            ft = this.targetRef.getValue(),
-            toType = toControl.getControlType(),
-            ts = toControl.sourceRef.getValue(),
-            result = !0;
-	    result = ft === "" ? (toType === "endevent" ? !1 : ts === "") : !1;
-	    
-	    // startevent 只允许一条出线
-	    result = (result && this.getContainer().validateAccessPath(this.getId(),"out",1));
-	    
-        return result
-    },
-    markEnded: function(){
-        this._attrs.src && (this._attrs.src = "hardflow/images/start_event_done.png");
-        return this._attrs;
-    }
+	}
 });
 
 EndEvent = ProcessNode.extend({
@@ -280,18 +256,10 @@ EndEvent = ProcessNode.extend({
 	},
 	render: function(){
 		var paper = this.getContainer()._paper, attrs = this._attrs;
-		attrs = (this.ended.getValue() === 1 ? this.markEnded() : this._attrs);
 		this._el = paper.image("", this.x.getValue(), this.y.getValue(), 0, 0).attr(attrs),
 		$(this._el.node).attr("id", this._id),
 		this.trigger("controlRendered")
-	},
-    validateSequence: function (toControl){
-        return !1
-    },
-    markEnded: function(){
-        this._attrs.src && (this._attrs.src = "hardflow/images/end_event_done.png");
-        return this._attrs;
-    }
+	}
 });
 
 TextNode = ProcessNode.extend({
@@ -330,23 +298,6 @@ UserTask = ProcessNode.extend({
 		}),
 
 		this.name.setValue("任务"),
-		this.assigneeType = new ScalarProperty("任务委派人", new CheckBoxWidget(new AcceptAllInputFilter, [{
-            text: "单位",
-            value: "organ"
-        },{
-            text: "用户",
-            value: "user"
-        }, {
-            text: "角色",
-            value: "role"
-        }])),
-        this.assignee = new ScalarProperty("", new TextAreaWidget(new AcceptAllInputFilter, !1), ""),
-		this.active = new ScalarProperty("", new NullWidget(new AcceptAllInputFilter, !1), 0),
-		
-		this.addProperty("assigneeType", this.assigneeType, {pos: 6}),
-		this.addProperty("assignee", this.assignee, {pos: 7}),
-		this.addProperty("active", this.active, {pos: 8}),
-
 		this.name.bind("valueChanged", function(a){
 			//更新子控件textnode的text值
 			for (var i = 0; i < self._childrens.length; i++) {
@@ -358,7 +309,6 @@ UserTask = ProcessNode.extend({
 	},
 	render: function(){
 		var paper = this.getContainer()._paper, attrs = this._attrs;
-		attrs = (this.active.getValue() === 1 ? this.markActive() : (this.ended.getValue() === 1 ? this.markEnded() : this._attrs));
 		this._el = paper.rect(this.x.getValue(), this.y.getValue(), 0, 0, attrs.radius).attr(attrs),
 		$(this._el.node).attr("id", this._id);
 
@@ -374,23 +324,7 @@ UserTask = ProcessNode.extend({
 		a.name.setValue("name"),
 		a.text.setValue(this.name.getValue()),
 		this.addChild(a)
-	},
-    validateSequence: function (toControl){
-        var ft = this.targetRef.getValue(),
-            toType = toControl.getControlType(),
-            ts = toControl.sourceRef.getValue(),
-            result = !0;
-        result = ft === "" ? (toType === "startevent" ? !1 : ts === "") : !1;
-        
-        //usertask 只允许一条出线
-        result = (result && this.getContainer().validateAccessPath(this.getId(),"out",1));
-        
-        return result
-    },
-    markActive: function(){
-        this._attrs.stroke = "#CC0000";
-        return this._attrs;
-    }
+	}
 });
 
 SequenceFlow = ProcessNode.extend({
@@ -422,7 +356,6 @@ SequenceFlow = ProcessNode.extend({
 	},
 	render: function(){
 		var app = this.getContainer(), paper = app._paper, attrs = this._attrs;
-        attrs = (this.ended.getValue() === 1 ? this.markEnded() : this._attrs);
 		this._el = paper.path(this.path.getValue()).attr(attrs)	
 
 		$(this._el.node).attr("id", this._id);
@@ -447,15 +380,12 @@ SequenceFlow = ProcessNode.extend({
 		var a = ControlFactory.newControl("arrownode");
 		this.addChild(a);
 		
-		//如果从conditionnode发出，则可以编辑线的名称
-		if(from.indexOf("conditionnode") != -1){
-            //添加文本图形，把其作为usertask的一个属性来处理，和name进行关联
-            var b = ControlFactory.newControl("textnode");
-            b.setLocation({x:this.x,y:this.y}),
-            b.name.setValue("conditionDisc"),
-            b.text.setValue(this.conditionDisc.getValue()),
-            this.addChild(b)		    
-		}
+        //添加文本图形，把其作为usertask的一个属性来处理，和name进行关联
+        var b = ControlFactory.newControl("textnode");
+        b.setLocation({x:this.x,y:this.y}),
+        b.name.setValue("conditionDisc"),
+        b.text.setValue(this.conditionDisc.getValue()),
+        this.addChild(b)
 	},
 	relocation: function(){
 		this._location(this.sourceRef.getValue(), this.targetRef.getValue())
@@ -563,106 +493,5 @@ ArrowNode = SequenceFlow.extend({
 		}),
 		this.path = new ScalarProperty("path", new NullWidget(new AcceptAllInputFilter, !1), "M10 10L10 10"),		
 		this.addProperty("path", this.path, {pos: 1})
-	},
-    markEnded: function(){
-        this._attrs.stroke && (this._attrs.stroke = "#0000CC");
-        this._attrs.fill && (this._attrs.fill = "#0000CC"); 
-        return this._attrs;
-    }
-});
-
-ConditionNode = ProcessNode.extend({
-    initialize: function(){
-        var self = this;
-        ProcessNode.prototype.initialize.call(this, "conditionnode", "条件分支", {
-            src: "hardflow/images/condition_event.png",
-            width: 48,
-            height: 48
-        }),
-
-        this.name.setValue("条件分支"),
-        this.name.bind("valueChanged", function(a){
-            //更新子控件textnode的text值
-            for (var i = 0; i < self._childrens.length; i++) {
-                var b = self._childrens[i];
-                b.name.getValue() === "name" && b.changeTextValue(a)
-            };
-        })
-    },
-    render: function(){
-        var paper = this.getContainer()._paper, attrs = this._attrs;
-        attrs = (this.ended.getValue() === 1 ? this.markEnded() : this._attrs);
-        // this._el = paper.rect(this.x.getValue(), this.y.getValue(), 0, 0, attrs.radius).attr(attrs),
-        this._el = paper.image("", this.x.getValue(), this.y.getValue(), 0, 0).attr(attrs),
-        $(this._el.node).attr("id", this._id);
-
-        for (var i = 0; i < this._childrens.length; i++) {
-            var a = this._childrens[i];
-            a.render()
-        };
-
-        this.trigger("controlRendered")
-    },
-    validateSequence: function (toControl){
-        var ft = this.targetRef.getValue(),
-            toType = toControl.getControlType(),
-            ts = toControl.sourceRef.getValue(),
-            result = !0;
-        result = ft === "" ? (toType === "startevent" ? !1 : ts === "") : !1;
-        
-        return result
-    },
-    markEnded: function(){
-        this._attrs.src && (this._attrs.src = "hardflow/images/condition_event_done.png"); 
-        return this._attrs;
-    }
-});
-
-TimeTask = ProcessNode.extend({
-    initialize: function(){
-        var self = this;
-        ProcessNode.prototype.initialize.call(this, "timetask", "定时任务", {
-            src: "hardflow/images/timetask_event.png",
-            width: 48,
-            height: 48
-        }),
-
-        this.name.setValue("定时任务"),
-        this.name.getWidget().setReadonly(1),
-        this.time = new ScalarProperty("结束时间", new DateWidget(new AcceptAllInputFilter, !1), ""),
-        this.time.getWidget().setReadonly(1),
-        this.active = new ScalarProperty("", new NullWidget(new AcceptAllInputFilter, !1), ""),
-        this.addProperty("time", this.time, {pos: 6}),
-        this.addProperty("active", this.active, {pos: 7})
-    },
-    render: function(){
-        var paper = this.getContainer()._paper, attrs = this._attrs;
-        attrs = (this.active === "1" ? this.markActive() : (this.ended === "1" ? this.markEnded() : this._attrs));
-        // this._el = paper.rect(this.x.getValue(), this.y.getValue(), 0, 0, attrs.radius).attr(attrs),
-        this._el = paper.image("", this.x.getValue(), this.y.getValue(), 0, 0).attr(attrs),
-        $(this._el.node).attr("id", this._id);
-
-        for (var i = 0; i < this._childrens.length; i++) {
-            var a = this._childrens[i];
-            a.render()
-        };
-
-        this.trigger("controlRendered")
-    },
-    validateSequence: function (toControl){
-        var ft = this.targetRef.getValue(),
-            toType = toControl.getControlType(),
-            ts = toControl.sourceRef.getValue(),
-            result = !0;
-        result = ft === "" ? (toType === "startevent" ? !1 : ts === "") : !1;
-        return result
-    },
-    markEnded: function(){
-        this._attrs.src && (this._attrs.src = "hardflow/images/timetask_event_done.png");
-        return this._attrs;
-    },
-    markActive: function(){
-        this._attrs.src && (this._attrs.src = "hardflow/images/timetask_event_now.png");
-        return this._attrs;
-    }
+	}
 });

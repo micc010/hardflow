@@ -208,35 +208,9 @@ Designer = Backbone.View.extend({
 			// ts = toControl.sourceRef.getValue(),
 			result = !0;
 			
-	    result = result && this.validateOnlyOnePath(from,to) && (typeof fromControl != "undefined") && (typeof toControl != "undefined") && fromControl.validateSequence(toControl);
+	    result = result && (typeof fromControl != "undefined") && (typeof toControl != "undefined");
 		
 		return result
-	},
-	validateOnlyOnePath: function(from,to){
-	    for (var i=0; i < this._document.root.getChildrens().length; i++) {
-	        var c = this._document.root.getChildrens()[i];
-	        if(c.getControlType() === "sequenceflow" && c.sourceRef.getValue() === from && c.targetRef.getValue() === to){
-	            return !1
-	        }
-	    }
-	    return 1
-	},
-	validateAccessPath: function(cid,type,count){
-	    var totalCount = 0;
-	    for (var i=0; i < this._document.root.getChildrens().length; i++) {
-		    var c = this._document.root.getChildrens()[i];
-		    if(c.getControlType() === "sequenceflow"){
-                if(type === "in" && c.targetRef.getValue() === cid){
-                    totalCount ++
-                }else{
-                    continue;
-                }
-                if(totalCount > count){
-                    return !1
-                }
-		    }
-		};
-		return 1
 	},
 	addPath: function(from, to){
 	    ControlFactory.setContainer(this);
@@ -276,11 +250,6 @@ Designer = Backbone.View.extend({
 	},
 	onPathSelected: function(a){
 		this.getDesignMode() === "sequenceflow" || (this.deselectAllControls(), this.getDevice().selecteControl(a, !0));
-		
-		if(a.sourceRef && a.sourceRef.getValue().indexOf("conditionnode") != -1){
-		    this.getPropertyView().renderForControl(a),
-            this.showPropertyDialogForControl(a)
-		}
 	},
 	setSelectedControl: function(a){
 		this._selectedControl = a
@@ -323,17 +292,18 @@ Designer = Backbone.View.extend({
 	    // 1、只能有一个开始一个结束
 	    // 2、不存在孤立的元素
 	    // 3、fork并发和join汇聚的对应关系
+	    // 4、只能有一个分支一个聚合
 	    
 	},
 	publishApp: function(options, callback){
-		
+
 		var obj = this.validateApp();
 		if(!obj.isValid){
 		    alert(obj.msg);
 		    return;
 		}
-		
-		var a = this, 
+
+		var a = this,
             b = new ControlOutputVisitor,
             back = typeof options === "function" ? options : callback,
             o = typeof options === "function" || !options ? {} : options,
