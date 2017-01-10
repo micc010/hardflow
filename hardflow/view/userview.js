@@ -49,7 +49,7 @@ ControlView = UserView.extend({
 			resizable: !1,
 			width: 100,
 			minWidth: 80,
-			height: 330,
+			height: 280,
 			position: [10, 50],
 			create: function(ev, ui){
 				var b = $(this).closest(".ui-dialog");

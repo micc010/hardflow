@@ -190,7 +190,7 @@ ProcessNode = Control.extend({
 		this.addProperty("y", this.y, {pos: 1}),
 		this.addProperty("name", this.name, {pos: 2}),
 		this.addProperty("sourceRef", this.sourceRef, {pos: 3}),
-		this.addProperty("targetRef", this.targetRef, {pos: 4}),
+		this.addProperty("targetRef", this.targetRef, {pos: 4})
 	},
 	renderTo: function(point){
 		this.render(),
